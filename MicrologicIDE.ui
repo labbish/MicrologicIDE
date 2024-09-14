@@ -54,13 +54,6 @@
     <addaction name="selectAllAction"/>
     <addaction name="dateAction"/>
    </widget>
-   <widget class="QMenu" name="menu_O">
-    <property name="title">
-     <string>格式(O)</string>
-    </property>
-    <addaction name="fontAction"/>
-    <addaction name="colorAction"/>
-   </widget>
    <widget class="QMenu" name="menu_V">
     <property name="title">
      <string>查看(&amp;V)</string>
@@ -82,7 +75,6 @@
    </widget>
    <addaction name="menu_F"/>
    <addaction name="menu_E"/>
-   <addaction name="menu_O"/>
    <addaction name="menu_V"/>
    <addaction name="menu_F5"/>
    <addaction name="menu_H"/>

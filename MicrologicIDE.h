@@ -22,9 +22,6 @@ public:
     void exitNotepad(void);
     void doForAboutAction(void);
 
-    void selectFont(void);
-    void selectColor(void);
-
     void seeHelp(void);
 
     void setDateTime();

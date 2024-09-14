@@ -27,8 +27,6 @@ MicrologicIDE::MicrologicIDE(QWidget *parent) :
     connect(ui->saveFileAction, &QAction::triggered, this, &MicrologicIDE::saveFile);
     connect(ui->exitNotepadAction, &QAction::triggered, this, &MicrologicIDE::exitNotepad);
     connect(ui->saveAsFileAction, &QAction::triggered, this, &MicrologicIDE::saveAsFile);
-    connect(ui->fontAction, &QAction::triggered, this, &MicrologicIDE::selectFont);
-    connect(ui->colorAction, &QAction::triggered, this, &MicrologicIDE::selectColor);
     connect(ui->aboutAction, &QAction::triggered, this, &MicrologicIDE::doForAboutAction);
 
     connect(ui->getHelpAction, &QAction::triggered, this, &MicrologicIDE::seeHelp);
@@ -147,23 +145,6 @@ void MicrologicIDE::doForAboutAction()
     about.exec();
 }
 
-void MicrologicIDE::selectFont()
-{
-    bool ok;
-    QFont font = QFontDialog::getFont(&ok, this);
-    if (ok)
-    {
-        ui->textEdit->setFont(font);
-    }
-
-}
-
-void MicrologicIDE::selectColor()
-{
-    QColor color = QColorDialog::getColor(Qt::yellow, this, tr("颜色对话框"));
-    ui->textEdit->setTextColor(color);
-}
-
 void MicrologicIDE::setDateTime()
 {
     ui->textEdit->append(QDateTime::currentDateTime().toString());
@@ -173,7 +154,7 @@ void MicrologicIDE::setDateTime()
 
 void MicrologicIDE::seeHelp(void)
 {
-    QUrl url("https://me.csdn.net/qq_36413982?ref=miniprofile");
+    QUrl url("https://github.com/HZZcode/MicrologicIDE");
     QDesktopServices::openUrl(url);
 }
 
@@ -242,12 +223,6 @@ void MicrologicIDE::setDocumentTitile(QString title)
 
 void MicrologicIDE::runFile()
 {
-    /*
-    QProcess process(this);
-    QString str = QApplication::applicationDirPath();
-    str += "/Micrologic.exe";
-    process.startDetached(str+"Micrologic.exe");
-    */
     QByteArray b=("start ./Micrologic.exe "+currentfileName).toLatin1();
     system(b.data());
 }
