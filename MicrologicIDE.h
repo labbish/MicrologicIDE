@@ -36,6 +36,20 @@ public:
 
     void runFile(void);
 
+    std::vector<std::string> content();
+    void markLine(std::vector<int>);
+    void unmark();
+    std::vector<bool> grammarCheck(std::vector<std::string>);
+
+    inline bool isNumber(const std::string str) {
+        for (char c : str) {
+            if (std::string("0123456789").find(c)==std::string::npos) return false;
+        }
+        return true;
+    }
+
+private slots:
+
 private:
     Ui::MicrologicIDE *ui;
     QString currentfileName;
