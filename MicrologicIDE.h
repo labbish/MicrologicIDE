@@ -3,6 +3,8 @@
 
 #include <QMainWindow>
 
+extern std::string exepath;
+
 namespace Ui {
 class MicrologicIDE;
 }

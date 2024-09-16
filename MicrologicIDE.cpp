@@ -14,6 +14,8 @@
 #include <QDateTime>
 #include <QProcess>
 
+std::string exepath="";
+
 MicrologicIDE::MicrologicIDE(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MicrologicIDE)
@@ -220,7 +222,7 @@ void MicrologicIDE::setDocumentTitile(QString title)
 
 void MicrologicIDE::runFile()
 {
-    QByteArray b=("start ./Micrologic.exe "+currentfileName).toLatin1();
+    QByteArray b=(QString::fromStdString("start /d \""+exepath+"\" Micrologic.exe ")+currentfileName).toLatin1();
     system(b.data());
 }
 

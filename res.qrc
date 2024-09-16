@@ -13,6 +13,7 @@
         <file>images/save.png</file>
         <file>images/saveAs.png</file>
         <file>images/undo.png</file>
+        <file>help.txt</file>
         <file>Micrologic.exe</file>
     </qresource>
 </RCC>
