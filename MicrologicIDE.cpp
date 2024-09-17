@@ -1,6 +1,7 @@
 #include "aboutdialog.h"
 #include "MicrologicIDE.h"
 #include "ui_MicrologicIDE.h"
+#include <fstream>
 #include <QMessageBox>
 #include <QDebug>
 #include <QFileDialog>
@@ -41,6 +42,9 @@ MicrologicIDE::MicrologicIDE(QWidget *parent) :
     connect(ui->selectAllAction, &QAction::triggered, ui->textEdit, &QTextEdit::selectAll);
 
     connect(ui->runAction, &QAction::triggered, this, &MicrologicIDE::runFile);
+
+    connect(ui->textEdit, &QTextEdit::textChanged, this, [&](){
+    });
 
 }
 
@@ -184,8 +188,9 @@ QString MicrologicIDE::saveDocumentText(void)
 
     unmark();
     std::vector<int> errorList;
-    for(int i=0;i<content().size();i++) if(!grammarCheck(content())[i]) errorList.push_back(i);
-    markLine(errorList);
+    auto grammar=grammarCheck(content());
+    for(int i=0;i<content().size();i++) if(!grammar[i]) errorList.push_back(i);
+    mark(errorList);
 
     return fileName;
 }
@@ -243,11 +248,12 @@ std::vector<std::string> MicrologicIDE::content(){
     return lines;
 }
 
-void MicrologicIDE::markLine(std::vector<int> errorList)
+void MicrologicIDE::mark(std::vector<int> errorList={})
 {
     std::string text;
     std::vector<std::string> lines=content();
     for(int k:errorList) if(lines.size()>=k+1) lines[k]="<span style=\"text-decoration: underline; text-decoration-color: red;\">"+lines[k]+"</span>";
+
     for(std::string& line:lines) text+=(line+"<br>");
     text=text.substr(0,text.length()-4);
     ui->textEdit->setText(text.c_str());
@@ -259,14 +265,84 @@ void MicrologicIDE::unmark()
     ui->textEdit->setText(text.c_str());
 }
 
+int countInput(std::vector<std::string> lines){
+    int ans=0;
+    for(int i=0;i<lines.size();i++){
+        std::string line=lines[i];
+        std::stringstream ss(line);
+        std::string s;
+        std::vector<std::string> args;
+        while (std::getline(ss, s, ' ')) {
+            args.push_back(s);
+        }
+        if(args.size()>0) if(args[0]=="input:") ans++;
+    }
+    return ans;
+}
+
+int countOutput(std::vector<std::string> lines){
+    int ans=0;
+    for(int i=0;i<lines.size();i++){
+        std::string line=lines[i];
+        std::stringstream ss(line);
+        std::string s;
+        std::vector<std::string> args;
+        while (std::getline(ss, s, ' ')) {
+            args.push_back(s);
+        }
+        if(args.size()>0) if(args[0]=="output:") ans++;
+    }
+    return ans;
+}
+
+std::map<std::string,std::pair<int,int>> MicrologicIDE::findMods(std::vector<std::string> lines){
+    std::map<std::string,std::pair<int,int>> mods;
+    for(int i=0;i<lines.size();i++){
+        std::string line=lines[i];
+        std::stringstream ss(line);
+        std::string s;
+        std::vector<std::string> args;
+        while (std::getline(ss, s, ' ')) {
+            args.push_back(s);
+        }
+        if(args.size()>0){
+            if (args[0] == "path" && count(line.begin(), line.end(), '\"') >= 2) {
+                int x = line.find("\""), y = line.rfind("\"");
+                std::string f = line.substr(x + 1, y - x - 1);
+                path = f;
+            }
+            else if (args[0] == "path" && args.size() == 2) {
+                path = args[1];
+            }
+            else if(args[0]=="mod"&&args.size()==3){
+                try{
+                    std::vector<std::string> lines1;
+                    std::ifstream fin;
+                    fin.open(path+args[2], std::ios::out | std::ios::in);
+                    bool b=fin.good();
+                    char fcmd[256] = "";
+                    while (fin.getline(fcmd, 256)) {
+                        lines1.push_back(fcmd);
+                    }
+                    std::map<std::string,std::pair<int,int>> mods1=findMods(lines1);
+                    if(b) mods.insert({args[1],{countInput(lines1),countOutput(lines1)}});
+                    mods.insert(mods1.begin(),mods1.end());
+                }catch(...){}
+            }
+        }
+    }
+    return mods;
+}
+
 std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines)
 {
     std::vector<bool> ans(lines.size());
     std::vector<bool> Ls; //line order->is wide
     std::vector<bool> ins; //input line order->is wide
     std::vector<bool> outs; //output line order->is wide
-    std::map<std::string,int> mods; //mod name->block count
-    for(std::string s:{"N","A","R","T","C","P"}) mods.insert({s,0});
+    std::map<std::string,int> modBlock; //mod name->block count
+    std::map<std::string,std::pair<int,int>> mods=findMods(lines); //modname->{input count,output count}
+    for(std::string s:{"N","A","R","T","C","P"}) modBlock.insert({s,0});
     for(int i=0;i<lines.size();i++){
         std::string line=lines[i];
         std::stringstream ss(line);
@@ -294,7 +370,7 @@ std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines)
             if(isNumber(args[1])&&isNumber(args[2])){
                 if(atoi(args[1].c_str())<Ls.size()&&atoi(args[2].c_str())<Ls.size()&&Ls[atoi(args[1].c_str())]==0&&Ls[atoi(args[2].c_str())]==0){
                     ans[i]=true;
-                    mods[args[0]]++;
+                    modBlock[args[0]]++;
                 }
                 else ans[i]=false;
             }
@@ -304,7 +380,7 @@ std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines)
             if(isNumber(args[1])&&isNumber(args[2])&&isNumber(args[3])){
                 if(atoi(args[1].c_str())<Ls.size()&&atoi(args[2].c_str())<Ls.size()&&atoi(args[3].c_str())<Ls.size()&&Ls[atoi(args[1].c_str())]==0&&Ls[atoi(args[2].c_str())]==0&&Ls[atoi(args[3].c_str())]==0){
                     ans[i]=true;
-                    mods[args[0]]++;
+                    modBlock[args[0]]++;
                 }
                 else ans[i]=false;
             }
@@ -314,7 +390,7 @@ std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines)
             if(isNumber(args[1])&&isNumber(args[2])&&isNumber(args[3])&&isNumber(args[4])&&isNumber(args[5])){
                 if(atoi(args[1].c_str())<Ls.size()&&atoi(args[2].c_str())<Ls.size()&&atoi(args[3].c_str())<Ls.size()&&atoi(args[4].c_str())<Ls.size()&&atoi(args[5].c_str())<Ls.size()&&Ls[atoi(args[1].c_str())]==0&&Ls[atoi(args[2].c_str())]==0&&Ls[atoi(args[3].c_str())]==0&&Ls[atoi(args[4].c_str())]==0&&Ls[atoi(args[5].c_str())]==1){
                     ans[i]=true;
-                    mods[args[0]]++;
+                    modBlock[args[0]]++;
                 }
                 else ans[i]=false;
             }
@@ -324,7 +400,7 @@ std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines)
             if(isNumber(args[1])&&isNumber(args[2])&&isNumber(args[3])&&isNumber(args[4])&&isNumber(args[5])){
                 if(atoi(args[1].c_str())<Ls.size()&&atoi(args[2].c_str())<Ls.size()&&atoi(args[3].c_str())<Ls.size()&&atoi(args[4].c_str())<Ls.size()&&atoi(args[5].c_str())<Ls.size()&&Ls[atoi(args[1].c_str())]==1&&Ls[atoi(args[2].c_str())]==0&&Ls[atoi(args[3].c_str())]==0&&Ls[atoi(args[4].c_str())]==0&&Ls[atoi(args[5].c_str())]==0){
                     ans[i]=true;
-                    mods[args[0]]++;
+                    modBlock[args[0]]++;
                 }
                 else ans[i]=false;
             }
@@ -399,19 +475,20 @@ std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines)
             ans[i]=true;
         }
         else if(args[0]=="mod"&&args.size()==3){
-            mods.insert({args[1],0});
+            modBlock.insert({args[1],0});
             ans[i]=true;
         }
         else if(args[0]=="block"&&args.size()>=3){
             if(mods.count(args[1])!=0){
-                ans[i]=true;
-                mods[args[1]]++;
+                if(args.size()==2+mods[args[1]].first+mods[args[1]].second) ans[i]=true;
+                else ans[i]=false;
+                modBlock[args[1]]++;
             }
-            else ans[i]=true;//false;
+            else ans[i]=false;
         }
         else if(args[0]=="inspect"&&args.size()==3){
             if(mods.count(args[1])!=0||args[1]=="N"||args[1]=="A"||args[1]=="R"||args[1]=="T"||args[1]=="C"||args[1]=="P"){
-                if(isNumber(args[2])&&atoi(args[2].c_str())<mods[args[1]]) ans[i]=true;
+                if(isNumber(args[2])&&atoi(args[2].c_str())<modBlock[args[1]]) ans[i]=true;
                 else ans[i]=false;
             }
             else ans[i]=false;
@@ -426,7 +503,19 @@ std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines)
             }
             else ans[i]=false;
         }
+        else if(args[0]=="lang"&&args.size()==2){
+            ans[i]=std::count(langs.begin(),langs.end(),args[1])==1;
+        }
+        else if(args[0]=="neko"&&args.size()==1){
+            ans[i]=true;
+        }
         else ans[i]=false;
     }
     return ans;
 }
+
+void MicrologicIDE::on_textEdit_textChanged()
+{
+
+}
+

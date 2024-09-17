@@ -14,6 +14,8 @@ class MicrologicIDE : public QMainWindow
     Q_OBJECT
 
 public:
+    std::string path;
+
     explicit MicrologicIDE(QWidget *parent = 0);
     ~MicrologicIDE();
 
@@ -39,8 +41,9 @@ public:
     void runFile(void);
 
     std::vector<std::string> content();
-    void markLine(std::vector<int>);
+    void mark(std::vector<int>);
     void unmark();
+    std::map<std::string,std::pair<int,int>> findMods(std::vector<std::string>);
     std::vector<bool> grammarCheck(std::vector<std::string>);
 
     inline bool isNumber(const std::string str) {
@@ -50,7 +53,11 @@ public:
         return true;
     }
 
+    std::vector<std::string> langs={"list","zh_cn","en_us"};
+
 private slots:
+
+    void on_textEdit_textChanged();
 
 private:
     Ui::MicrologicIDE *ui;
