@@ -2,6 +2,7 @@
 #include "MicrologicIDE.h"
 #include "ui_MicrologicIDE.h"
 #include <fstream>
+#include <iostream>
 #include <QMessageBox>
 #include <QDebug>
 #include <QFileDialog>
@@ -14,6 +15,7 @@
 #include <QUrl>
 #include <QDateTime>
 #include <QProcess>
+#include <QTextLayout>
 
 std::string exepath="";
 
@@ -21,8 +23,10 @@ MicrologicIDE::MicrologicIDE(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MicrologicIDE)
 {
+    currentContent="";
+
     ui->setupUi(this);
-    ui->textEdit->setDocumentTitle("untitled -- notepad");
+    ui->textEdit->setDocumentTitle("untitled -- MicrologicIDE");
     setWindowTitle(ui->textEdit->documentTitle());
 
     connect(ui->newFileAction, &QAction::triggered, this, &MicrologicIDE::newFile);
@@ -43,8 +47,7 @@ MicrologicIDE::MicrologicIDE(QWidget *parent) :
 
     connect(ui->runAction, &QAction::triggered, this, &MicrologicIDE::runFile);
 
-    connect(ui->textEdit, &QTextEdit::textChanged, this, [&](){
-    });
+    connect(ui->textEdit, &QTextEdit::textChanged, this, &MicrologicIDE::markError);
 
 }
 
@@ -69,11 +72,11 @@ void MicrologicIDE::newFile(void)
                     currentfileName.clear();
                 }
 
-                setDocumentTitile("untitled -- notepad");
+                setDocumentTitile("untitled -- MicrologicIDE");
                 ui->textEdit->document()->clear();
                 break;
             case QMessageBox::No :
-                setDocumentTitile("untitled -- notepad");
+                setDocumentTitile("untitled -- MicrologicIDE");
                 ui->textEdit->document()->clear();
                 break;
             case QMessageBox::Cancel :
@@ -153,7 +156,6 @@ void MicrologicIDE::doForAboutAction()
 void MicrologicIDE::setDateTime()
 {
     ui->textEdit->append(QDateTime::currentDateTime().toString());
-    //markLine(0);
 }
 
 void MicrologicIDE::seeHelp(void)
@@ -186,12 +188,6 @@ QString MicrologicIDE::saveDocumentText(void)
         file.close();
     }
 
-    unmark();
-    std::vector<int> errorList;
-    auto grammar=grammarCheck(content());
-    for(int i=0;i<content().size();i++) if(!grammar[i]) errorList.push_back(i);
-    mark(errorList);
-
     return fileName;
 }
 
@@ -214,7 +210,7 @@ void MicrologicIDE::getDocumentText()
 
 int MicrologicIDE::requestIsSave()
 {
-    int answer =  QMessageBox::question(this, tr("notepad"), tr("是否将更改保存？"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+    int answer =  QMessageBox::question(this, tr("MicrologicIDE"), tr("是否将更改保存？"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
     return answer;
 }
 
@@ -252,8 +248,7 @@ void MicrologicIDE::mark(std::vector<int> errorList={})
 {
     std::string text;
     std::vector<std::string> lines=content();
-    for(int k:errorList) if(lines.size()>=k+1) lines[k]="<span style=\"text-decoration: underline; text-decoration-color: red;\">"+lines[k]+"</span>";
-
+    for(int k:errorList) if(lines.size()>=k+1) lines[k]="<span style=\"text-decoration: underline; text-decoration-color: red; white-space: pre;\">"+lines[k]+"</span>";
     for(std::string& line:lines) text+=(line+"<br>");
     text=text.substr(0,text.length()-4);
     ui->textEdit->setText(text.c_str());
@@ -263,6 +258,22 @@ void MicrologicIDE::unmark()
 {
     std::string text=ui->textEdit->document()->toPlainText().toStdString();
     ui->textEdit->setText(text.c_str());
+}
+
+void MicrologicIDE::markError(){
+    if(currentContent!=ui->textEdit->document()->toPlainText().toStdString()){
+        currentContent=ui->textEdit->document()->toPlainText().toStdString();
+        QTextCursor cursor=ui->textEdit->textCursor();
+        int pos=cursor.position();
+        unmark();
+        std::vector<int> errorList;
+        auto grammar=grammarCheck(content());
+        for(int i=0;i<content().size();i++) if(!grammar[i]) errorList.push_back(i);
+        mark(errorList);
+        cursor=ui->textEdit->textCursor();
+        cursor.setPosition(pos);
+        ui->textEdit->setTextCursor(cursor);
+    }
 }
 
 int countInput(std::vector<std::string> lines){
