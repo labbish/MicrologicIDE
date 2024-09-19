@@ -479,10 +479,16 @@ std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines)
         else if((args[0]=="tick"||args[0]=="tick!"||args[0]=="speed")&&args.size()==2){
             ans[i]=isNumber(args[1]);
         }
+        else if(args[0]=="path"&&count(line.begin(),line.end(),'\"')>=2){
+            ans[i]=true;
+        }
         else if(args[0]=="path"&&args.size()==2){
-            ans[i]=(args[1][args[1].size()-1]=='\\');
+            ans[i]=true;
         }
         else if(args[0]=="open"&&args.size()==2){
+            ans[i]=true;
+        }
+        else if(args[0]=="open"&&count(line.begin(),line.end(),'\"')>=2){
             ans[i]=true;
         }
         else if(args[0]=="mod"&&args.size()==3){
