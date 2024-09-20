@@ -17,6 +17,14 @@ public:
     std::string currentContent;
     std::string path;
 
+    const std::vector<std::string> blankChars={" ","\n","<span style=\"text-decoration: underline; text-decoration-color: red; white-space: pre;\">","</span>","<br>"};
+    const std::vector<std::string> keys={"end","line","wline","N","A","R","T","C","P","set","check","input:","input","output:","output","tick","tick!","speed","path","open","mod","block","inspect","echo","@echo","clear","help","clear"};
+
+    const std::string errorStart="<span style=\"text-decoration: underline; text-decoration-color: red; white-space: pre;\">",errorEnd="</span>";
+    const std::string keyStart="<span style=\"color: orange; white-space: pre;\">",keyEnd="</span>";
+    const std::string numStart="<span style=\"color: aqua; white-space: pre;\">",numEnd="</span>";
+    const std::string modStart="<span style=\"color: purple; white-space: pre;\">",modEnd="</span>";
+
     explicit MicrologicIDE(QWidget *parent = 0);
     ~MicrologicIDE();
 
@@ -46,15 +54,35 @@ public:
     void unmark();
     std::map<std::string,std::pair<int,int>> findMods(std::vector<std::string>);
     std::vector<bool> grammarCheck(std::vector<std::string>);
-    void markError();
+    void makeMarks();
 
     int charCount(int,int);
 
+    const std::vector<std::string> nums={"0","1","2","3","4","5","6","7","8","9"};
+    inline bool isBlank(const std::string str){
+        return count(blankChars.begin(),blankChars.end(),str);
+    }
+    inline bool isNumber(const char c) {
+        std::string s="";
+        s.push_back(c);
+        if (count(nums.begin(),nums.end(),s)==0) return false;
+        return true;
+    }
     inline bool isNumber(const std::string str) {
+        if(str.length()>=4) return false;
         for (char c : str) {
-            if (std::string("0123456789").find(c)==std::string::npos) return false;
+            std::string s="";
+            s.push_back(c);
+            if (count(nums.begin(),nums.end(),s)==0) return false;
         }
         return true;
+    }
+    inline int maxBlankLength(std::string s){
+        int l=0;
+        for(const std::string& b:blankChars){
+            if(b.length()>l&&b.substr(0,s.length())==s) l=b.length();
+        }
+        return l;
     }
 
     std::vector<std::string> langs={"list","zh_cn","en_us"};

@@ -1,6 +1,7 @@
 #include "aboutdialog.h"
 #include "MicrologicIDE.h"
 #include "ui_MicrologicIDE.h"
+#include "Timer.h"
 #include <fstream>
 #include <iostream>
 #include <QMessageBox>
@@ -47,7 +48,7 @@ MicrologicIDE::MicrologicIDE(QWidget *parent) :
 
     connect(ui->runAction, &QAction::triggered, this, &MicrologicIDE::runFile);
 
-    connect(ui->textEdit, &QTextEdit::textChanged, this, &MicrologicIDE::markError);
+    connect(ui->textEdit, &QTextEdit::textChanged, this, &MicrologicIDE::makeMarks);
 
 }
 
@@ -100,6 +101,10 @@ void MicrologicIDE::openFile(void)
     }
     getDocumentText();
     setDocumentTitile(currentfileName);
+    try{
+        path=currentfileName.toStdString().substr(0,currentfileName.toStdString().rfind("/")+1);
+        path.replace(path.size()-1,1,"\\");
+    }catch(...){}
 }
 
 void MicrologicIDE::saveFile(void)
@@ -246,12 +251,85 @@ std::vector<std::string> MicrologicIDE::content(){
 
 void MicrologicIDE::mark(std::vector<int> errorList={})
 {
-    std::string text;
-    std::vector<std::string> lines=content();
-    for(int k:errorList) if(lines.size()>=k+1) lines[k]="<span style=\"text-decoration: underline; text-decoration-color: red; white-space: pre;\">"+lines[k]+"</span>";
-    for(std::string& line:lines) text+=(line+"<br>");
-    text=text.substr(0,text.length()-4);
-    ui->textEdit->setText(text.c_str());
+    try{
+        std::string text;
+        std::vector<std::string> lines=content();
+        //Timer timer;
+
+        //error
+        for(int k:errorList) if(lines.size()>=k+1) lines[k]=errorStart+lines[k]+errorEnd;
+        for(std::string& line:lines) text+=(line+"<br>");
+        text=text.substr(0,text.length()-4);
+
+        //keyword
+        for(const std::string& key:keys){
+            int t;
+            for(const std::string& x:blankChars)
+                for(const std::string& y:blankChars)
+                    while((t=text.find(x+key+y))!=std::string::npos){
+                        text.replace(t,x.size()+key.size()+y.size(),x+keyStart+key+keyEnd+y);
+                    }
+            if(text.substr(0,key.size())==key)
+                text.replace(0,key.size(),keyStart+key+keyEnd);
+            if(text.substr(text.size()-key.size(),text.size())==key)
+                text.replace(text.size()-key.size(),key.size(),keyStart+key+keyEnd);
+        }
+
+        //mod name
+        for(const std::pair<std::string,std::pair<int,int>>& m:findMods(lines)){
+            std::string mod=m.first;
+            int t;
+            for(const std::string& x:blankChars)
+                for(const std::string& y:blankChars)
+                    while((t=text.find(x+mod+y))!=std::string::npos){
+                        text.replace(t,x.size()+mod.size()+y.size(),x+modStart+mod+modEnd+y);
+                    }
+            if(text.substr(0,mod.size())==mod)
+                text.replace(0,mod.size(),modStart+mod+modEnd);
+            if(text.substr(text.size()-mod.size(),text.size())==mod)
+                text.replace(text.size()-mod.size(),mod.size(),modStart+mod+modEnd);
+        }
+
+        //number
+        {
+            std::vector<std::string> segments;
+            for(int i=0;i<text.size();){
+                bool found=false;
+                for(int j=0;i+j<=text.size();j++){
+                    if(isBlank(text.substr(i,j))){
+                        segments.push_back(text.substr(i,j));
+                        found=true;
+                        i+=j;
+                        break;
+                    }
+                    if(j>maxBlankLength(text.substr(i,j))) break;
+                }
+                if(!found){
+                    segments.push_back(text.substr(i,1));
+                    i++;
+                }
+            }
+            std::vector<std::string> words;
+            for(int i=0;i<segments.size();i++){
+                if(i==0) words.push_back(segments[i]);
+                else{
+                    if(isNumber(segments[i])&&isNumber(segments[i-1])) words[words.size()-1]+=segments[i];
+                    else words.push_back(segments[i]);
+                }
+            }
+            text.clear();
+            for(int i=0;i<words.size();i++){
+                bool mark=false;
+                if(i==0&&isNumber(words[i])&&isBlank(words[i+1])) mark=true;
+                else if(isBlank(words[i-1])&&isNumber(words[i])&&i==words.size()-1) mark=true;
+                else if(isBlank(words[i-1])&&isNumber(words[i])&&isBlank(words[i+1])) mark=true;
+                if(mark) words[i]=numStart+words[i]+numEnd;
+                text+=words[i];
+            }
+        }
+
+        ui->textEdit->setText(text.c_str());
+    }catch(...){}
 }
 
 void MicrologicIDE::unmark()
@@ -260,7 +338,7 @@ void MicrologicIDE::unmark()
     ui->textEdit->setText(text.c_str());
 }
 
-void MicrologicIDE::markError(){
+void MicrologicIDE::makeMarks(){
     if(currentContent!=ui->textEdit->document()->toPlainText().toStdString()){
         currentContent=ui->textEdit->document()->toPlainText().toStdString();
         QTextCursor cursor=ui->textEdit->textCursor();
@@ -329,14 +407,26 @@ std::map<std::string,std::pair<int,int>> MicrologicIDE::findMods(std::vector<std
                 try{
                     std::vector<std::string> lines1;
                     std::ifstream fin;
-                    fin.open(path+args[2], std::ios::out | std::ios::in);
+                    std::string f=args[2];
+                    fin.open(f,std::ios::out|std::ios::in);
                     bool b=fin.good();
-                    char fcmd[256] = "";
+                    std::string nextPath=f.substr(0,f.rfind("\\")+1);
+                    if (!fin.good()){
+                        fin.open(path+f,std::ios::out|std::ios::in);
+                        nextPath=(path+f).substr(0,f.rfind("\\")+1);
+                        b=b||fin.good();
+                    }
+                    int t;
+                    while((t=nextPath.find("/"))!=std::string::npos) nextPath.replace(t,1,"\\");
+                    if (nextPath!="") path=nextPath;
+                    char fcmd[256]="";
                     while (fin.getline(fcmd, 256)) {
                         lines1.push_back(fcmd);
                     }
                     std::map<std::string,std::pair<int,int>> mods1=findMods(lines1);
-                    if(b) mods.insert({args[1],{countInput(lines1),countOutput(lines1)}});
+                    if(b){
+                        mods.insert({args[1],{countInput(lines1),countOutput(lines1)}});
+                    }
                     mods.insert(mods1.begin(),mods1.end());
                 }catch(...){}
             }

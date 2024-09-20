@@ -25,6 +25,7 @@ if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
         ${PROJECT_SOURCES}
         aboutdialog.cpp aboutdialog.h aboutdialog.ui
         res.qrc
+        Timer.h Timer.cpp
 
 
     )
