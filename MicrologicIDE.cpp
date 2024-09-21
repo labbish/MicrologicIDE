@@ -265,8 +265,7 @@ void MicrologicIDE::mark(std::vector<int> errorList={})
         for(const std::string& x:blankChars)
             for(const std::string& y:blankChars)
                 while((t=text.find(x+key+y))!=std::string::npos){
-                    qDebug()<<t;
-                    //text.replace(t,x.size()+key.size()+y.size(),x+keyStart+key+keyEnd+y);
+                    text.replace(t,x.size()+key.size()+y.size(),x+keyStart+key+keyEnd+y);
                 }
         if(text.length()>=key.length()){
             if(text.substr(0,key.size())==key)
