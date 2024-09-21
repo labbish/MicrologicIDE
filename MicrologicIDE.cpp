@@ -1,7 +1,6 @@
 #include "aboutdialog.h"
 #include "MicrologicIDE.h"
 #include "ui_MicrologicIDE.h"
-#include "Timer.h"
 #include <fstream>
 #include <iostream>
 #include <QMessageBox>
@@ -25,6 +24,7 @@ MicrologicIDE::MicrologicIDE(QWidget *parent) :
     ui(new Ui::MicrologicIDE)
 {
     currentContent="";
+    path="";
 
     ui->setupUi(this);
     ui->textEdit->setDocumentTitle("untitled -- MicrologicIDE");
@@ -215,7 +215,7 @@ void MicrologicIDE::getDocumentText()
 
 int MicrologicIDE::requestIsSave()
 {
-    int answer =  QMessageBox::question(this, tr("MicrologicIDE"), tr("是否将更改保存？"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
+    int answer = QMessageBox::question(this, tr("MicrologicIDE"), tr("是否将更改保存？"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
     return answer;
 }
 
@@ -234,7 +234,7 @@ void MicrologicIDE::runFile()
 
 std::vector<std::string> MicrologicIDE::content(){
     std::string text=ui->textEdit->document()->toPlainText().toStdString();
-    std::vector<std::string> lines;
+    std::vector<std::string> lines{};
     while(1){
         int t=text.find("\n");
         if(t!=std::string::npos){
@@ -251,85 +251,84 @@ std::vector<std::string> MicrologicIDE::content(){
 
 void MicrologicIDE::mark(std::vector<int> errorList={})
 {
-    try{
-        std::string text;
-        std::vector<std::string> lines=content();
-        //Timer timer;
+    std::string text{};
+    std::vector<std::string> lines=content();
 
-        //error
-        for(int k:errorList) if(lines.size()>=k+1) lines[k]=errorStart+lines[k]+errorEnd;
-        for(std::string& line:lines) text+=(line+"<br>");
-        text=text.substr(0,text.length()-4);
+    //error
+    for(int k:errorList) if(lines.size()>=k+1) lines[k]=errorStart+lines[k]+errorEnd;
+    for(std::string& line:lines) text+=(line+"<br>");
+    text=text.substr(0,text.length()-4);
 
-        //keyword
-        for(const std::string& key:keys){
-            int t;
-            for(const std::string& x:blankChars)
-                for(const std::string& y:blankChars)
-                    while((t=text.find(x+key+y))!=std::string::npos){
-                        text.replace(t,x.size()+key.size()+y.size(),x+keyStart+key+keyEnd+y);
-                    }
+    //keyword
+    for(const std::string& key:keys){
+        int t{};
+        for(const std::string& x:blankChars)
+            for(const std::string& y:blankChars)
+                while((t=text.find(x+key+y))!=std::string::npos){
+                    qDebug()<<t;
+                    //text.replace(t,x.size()+key.size()+y.size(),x+keyStart+key+keyEnd+y);
+                }
+        if(text.length()>=key.length()){
             if(text.substr(0,key.size())==key)
                 text.replace(0,key.size(),keyStart+key+keyEnd);
             if(text.substr(text.size()-key.size(),text.size())==key)
                 text.replace(text.size()-key.size(),key.size(),keyStart+key+keyEnd);
         }
+    }
 
-        //mod name
-        for(const std::pair<std::string,std::pair<int,int>>& m:findMods(lines)){
-            std::string mod=m.first;
-            int t;
-            for(const std::string& x:blankChars)
-                for(const std::string& y:blankChars)
-                    while((t=text.find(x+mod+y))!=std::string::npos){
-                        text.replace(t,x.size()+mod.size()+y.size(),x+modStart+mod+modEnd+y);
-                    }
-            if(text.substr(0,mod.size())==mod)
-                text.replace(0,mod.size(),modStart+mod+modEnd);
-            if(text.substr(text.size()-mod.size(),text.size())==mod)
-                text.replace(text.size()-mod.size(),mod.size(),modStart+mod+modEnd);
+    //mod name
+    for(const std::pair<std::string,std::pair<int,int>>& m:findMods(lines)){
+        std::string mod=m.first;
+        int t{};
+        for(const std::string& x:blankChars)
+            for(const std::string& y:blankChars)
+                while((t=text.find(x+mod+y))!=std::string::npos){
+                    text.replace(t,x.size()+mod.size()+y.size(),x+modStart+mod+modEnd+y);
+                }
+        if(text.substr(0,mod.size())==mod)
+            text.replace(0,mod.size(),modStart+mod+modEnd);
+        if(text.substr(text.size()-mod.size(),text.size())==mod)
+            text.replace(text.size()-mod.size(),mod.size(),modStart+mod+modEnd);
+    }
+
+    //number
+    std::vector<std::string> segments{};
+    for(int i=0;i<text.size();){
+        bool found=false;
+        for(int j=0;i+j<=text.size();j++){
+            if(isBlank(text.substr(i,j))){
+                segments.push_back(text.substr(i,j));
+                found=true;
+                i+=j;
+                break;
+            }
+            if(j>maxBlankLength(text.substr(i,j))) break;
         }
-
-        //number
-        {
-            std::vector<std::string> segments;
-            for(int i=0;i<text.size();){
-                bool found=false;
-                for(int j=0;i+j<=text.size();j++){
-                    if(isBlank(text.substr(i,j))){
-                        segments.push_back(text.substr(i,j));
-                        found=true;
-                        i+=j;
-                        break;
-                    }
-                    if(j>maxBlankLength(text.substr(i,j))) break;
-                }
-                if(!found){
-                    segments.push_back(text.substr(i,1));
-                    i++;
-                }
-            }
-            std::vector<std::string> words;
-            for(int i=0;i<segments.size();i++){
-                if(i==0) words.push_back(segments[i]);
-                else{
-                    if(isNumber(segments[i])&&isNumber(segments[i-1])) words[words.size()-1]+=segments[i];
-                    else words.push_back(segments[i]);
-                }
-            }
-            text.clear();
-            for(int i=0;i<words.size();i++){
-                bool mark=false;
-                if(i==0&&isNumber(words[i])&&isBlank(words[i+1])) mark=true;
-                else if(isBlank(words[i-1])&&isNumber(words[i])&&i==words.size()-1) mark=true;
-                else if(isBlank(words[i-1])&&isNumber(words[i])&&isBlank(words[i+1])) mark=true;
-                if(mark) words[i]=numStart+words[i]+numEnd;
-                text+=words[i];
-            }
+        if(!found){
+            segments.push_back(text.substr(i,1));
+            i++;
         }
+    }
+    std::vector<std::string> words{};
+    for(int i=0;i<segments.size();i++){
+        if(i==0) words.push_back(segments[i]);
+        else{
+            if(isNumber(segments[i])&&isNumber(segments[i-1])) words[words.size()-1]+=segments[i];
+            else words.push_back(segments[i]);
+        }
+    }
+    text.clear();
+    for(int i=0;i<words.size();i++){
+        bool mark=false;
+        if(i==0&&i==words.size()-1){ if(isNumber(words[i])) mark=true;}
+        else if(i==0){ if(isNumber(words[i])&&isBlank(words[i+1])) mark=true;}
+        else if(i==words.size()-1){ if(isBlank(words[i-1])&&isNumber(words[i])) mark=true;}
+        else{if(isBlank(words[i-1])&&isNumber(words[i])&&isBlank(words[i+1])) mark=true;}
+        if(mark) words[i]=numStart+words[i]+numEnd;
+        text+=words[i];
+    }
 
-        ui->textEdit->setText(text.c_str());
-    }catch(...){}
+    ui->textEdit->setText(text.c_str());
 }
 
 void MicrologicIDE::unmark()
@@ -359,8 +358,8 @@ int countInput(std::vector<std::string> lines){
     for(int i=0;i<lines.size();i++){
         std::string line=lines[i];
         std::stringstream ss(line);
-        std::string s;
-        std::vector<std::string> args;
+        std::string s{};
+        std::vector<std::string> args{};
         while (std::getline(ss, s, ' ')) {
             args.push_back(s);
         }
@@ -374,8 +373,8 @@ int countOutput(std::vector<std::string> lines){
     for(int i=0;i<lines.size();i++){
         std::string line=lines[i];
         std::stringstream ss(line);
-        std::string s;
-        std::vector<std::string> args;
+        std::string s{};
+        std::vector<std::string> args{};
         while (std::getline(ss, s, ' ')) {
             args.push_back(s);
         }
@@ -385,12 +384,12 @@ int countOutput(std::vector<std::string> lines){
 }
 
 std::map<std::string,std::pair<int,int>> MicrologicIDE::findMods(std::vector<std::string> lines){
-    std::map<std::string,std::pair<int,int>> mods;
+    std::map<std::string,std::pair<int,int>> mods{};
     for(int i=0;i<lines.size();i++){
         std::string line=lines[i];
         std::stringstream ss(line);
-        std::string s;
-        std::vector<std::string> args;
+        std::string s{};
+        std::vector<std::string> args{};
         while (std::getline(ss, s, ' ')) {
             args.push_back(s);
         }
@@ -405,8 +404,8 @@ std::map<std::string,std::pair<int,int>> MicrologicIDE::findMods(std::vector<std
             }
             else if(args[0]=="mod"&&args.size()==3){
                 try{
-                    std::vector<std::string> lines1;
-                    std::ifstream fin;
+                    std::vector<std::string> lines1{};
+                    std::ifstream fin{};
                     std::string f=args[2];
                     fin.open(f,std::ios::out|std::ios::in);
                     bool b=fin.good();
@@ -438,17 +437,17 @@ std::map<std::string,std::pair<int,int>> MicrologicIDE::findMods(std::vector<std
 std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines)
 {
     std::vector<bool> ans(lines.size());
-    std::vector<bool> Ls; //line order->is wide
-    std::vector<bool> ins; //input line order->is wide
-    std::vector<bool> outs; //output line order->is wide
-    std::map<std::string,int> modBlock; //mod name->block count
+    std::vector<bool> Ls{}; //line order->is wide
+    std::vector<bool> ins{}; //input line order->is wide
+    std::vector<bool> outs{}; //output line order->is wide
+    std::map<std::string,int> modBlock{}; //mod name->block count
     std::map<std::string,std::pair<int,int>> mods=findMods(lines); //modname->{input count,output count}
     for(std::string s:{"N","A","R","T","C","P"}) modBlock.insert({s,0});
     for(int i=0;i<lines.size();i++){
         std::string line=lines[i];
         std::stringstream ss(line);
-        std::string s;
-        std::vector<std::string> args;
+        std::string s{};
+        std::vector<std::string> args{};
         while (std::getline(ss, s, ' ')) {
             args.push_back(s);
         }
