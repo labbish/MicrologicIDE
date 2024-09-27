@@ -619,24 +619,40 @@ void MicrologicIDE::updateDebug()
 
     std::stringstream ss(text);
     std::string s{};
-    std::vector<std::string> nums{};
+    std::vector<std::string> infos{},nums{};
     while (std::getline(ss, s, ' ')) {
-        nums.push_back(s);
+        infos.push_back(s);
     }
     std::string line1="",line2="";
-    for(int i=0;i<nums.size();i++){
+    for(int i=0;i<infos.size();i++){
+        nums.push_back(infos[i].substr(2,infos.size()));
+        bool I=(infos[i][0]=='I'),O=(infos[i][1]=='O');
+        std::string start="",end="";
+        if(I&&O){
+            start=IOStart;
+            end=IOEnd;
+        }
+        else if(I){
+            start=IStart;
+            end=IEnd;
+        }
+        else if(O){
+            start=OStart;
+            end=OEnd;
+        }
+
         if(nums[i].size()==1){
-            line1+=("[L"+std::to_string(i)+"] ");
-            if(std::to_string(i).length()==1) line2+=("  "+nums[i]+"  ");
-            else line2+=("  "+nums[i]+"   ");
+            line1+=(start+"[L"+std::to_string(i)+"]"+end+" ");
+            if(std::to_string(i).length()==1) line2+=("  "+start+nums[i]+end+"  ");
+            else line2+=("  "+start+nums[i]+end+"   ");
         }
         else{
-            line1+=("[W"+std::to_string(i)+"] ");
-            if(std::to_string(i).length()==1) line2+=(nums[i]+" ");
-            else line2+=(" "+nums[i]+" ");
+            line1+=(start+"[W"+std::to_string(i)+"]"+end+" ");
+            if(std::to_string(i).length()==1) line2+=(start+nums[i]+end+" ");
+            else line2+=(" "+start+nums[i]+end+" ");
         }
     }
     line1=line1.substr(0,line1.length()-1);
     line2=line2.substr(0,line2.length()-1);
-    ui->debugText->setText((line1+"\n"+line2).c_str());
+    ui->debugText->setText((debugInfo+"<br>"+debugStart+line1+"<br>"+line2+debugEnd).c_str());
 }

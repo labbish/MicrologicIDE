@@ -23,6 +23,12 @@ public:
     const std::string numStart="<span style=\"color: aqua; white-space: pre;\">",numEnd="</span>";
     const std::string modStart="<span style=\"color: purple; white-space: pre;\">",modEnd="</span>";
 
+    const std::string debugStart="<span style=\"white-space: pre;\">",debugEnd="</span>";
+    const std::string IStart="<span style=\"color: red; white-space: pre;\">",IEnd="</span>";
+    const std::string OStart="<span style=\"color: blue; white-space: pre;\">",OEnd="</span>";
+    const std::string IOStart="<span style=\"color: purple; white-space: pre;\">",IOEnd="</span>";
+    const std::string debugInfo="====[DEBUG INFO] "+IStart+"input "+IEnd+OStart+"output "+OEnd+IOStart+"input&output "+IOEnd+"====";
+
     const std::vector<std::string> blankChars={" ","\n",errorStart,errorEnd,"<br>"};
     const std::vector<std::string> keys={"end","line","wline","N","A","R","T","C","P","set","check","input:","input","output:","output","tick","tick!","speed","path","open","mod","block","inspect","echo","@echo","clear","help","clear"};
     const std::vector<std::string> nums={"0","1","2","3","4","5","6","7","8","9"};
