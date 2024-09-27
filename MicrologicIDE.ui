@@ -17,9 +17,31 @@
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
      <widget class="QTextEdit" name="textEdit">
+      <property name="sizePolicy">
+       <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+        <horstretch>0</horstretch>
+        <verstretch>0</verstretch>
+       </sizepolicy>
+      </property>
       <property name="font">
        <font>
+        <family>Consolas</family>
         <pointsize>10</pointsize>
+       </font>
+      </property>
+     </widget>
+    </item>
+    <item>
+     <widget class="QTextBrowser" name="debugText">
+      <property name="maximumSize">
+       <size>
+        <width>16777215</width>
+        <height>36</height>
+       </size>
+      </property>
+      <property name="font">
+       <font>
+        <family>Consolas</family>
        </font>
       </property>
      </widget>

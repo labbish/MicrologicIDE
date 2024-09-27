@@ -30,6 +30,10 @@ MicrologicIDE::MicrologicIDE(QWidget *parent) :
     ui->textEdit->setDocumentTitle("untitled -- MicrologicIDE");
     setWindowTitle(ui->textEdit->documentTitle());
 
+    debugger = new QFileSystemWatcher();
+    QByteArray b=(QString::fromStdString(exepath+"\\debug.log")+currentfileName).toLatin1();
+    debugger->addPath(b.data());
+
     connect(ui->newFileAction, &QAction::triggered, this, &MicrologicIDE::newFile);
     connect(ui->openFileAction, &QAction::triggered, this, &MicrologicIDE::openFile);
     connect(ui->saveFileAction, &QAction::triggered, this, &MicrologicIDE::saveFile);
@@ -47,6 +51,7 @@ MicrologicIDE::MicrologicIDE(QWidget *parent) :
     connect(ui->selectAllAction, &QAction::triggered, ui->textEdit, &QTextEdit::selectAll);
 
     connect(ui->runAction, &QAction::triggered, this, &MicrologicIDE::runFile);
+    connect(debugger, SIGNAL(fileChanged(QString)), this, SLOT(updateDebug()));
 
     connect(ui->textEdit, &QTextEdit::textChanged, this, &MicrologicIDE::makeMarks);
 
@@ -57,48 +62,35 @@ MicrologicIDE::~MicrologicIDE()
     delete ui;
 }
 
-//新建文件
 void MicrologicIDE::newFile(void)
 {
-    if (ui->textEdit->document()->isModified()) //编辑区内容是否改变
+    switch (requestIsSave())
     {
-        qDebug() << "document is modified";
-        switch (requestIsSave())               //是否要保存
+    case QMessageBox::Yes :
+        saveDocumentText();
+
+        if (!currentfileName.isEmpty())
         {
-            case QMessageBox::Yes :            //保存
-                saveDocumentText();
-
-                if (!currentfileName.isEmpty())
-                {
-                    currentfileName.clear();
-                }
-
-                setDocumentTitile("untitled -- MicrologicIDE");
-                ui->textEdit->document()->clear();
-                break;
-            case QMessageBox::No :
-                setDocumentTitile("untitled -- MicrologicIDE");
-                ui->textEdit->document()->clear();
-                break;
-            case QMessageBox::Cancel :
-                qDebug() << "取消";
-                break;
-            default:
-                break;
+            currentfileName.clear();
         }
-    }
-    else
-    {
-        qDebug() << "document is not modified";
+
+        setDocumentTitile("untitled -- MicrologicIDE");
+        ui->textEdit->document()->clear();
+        break;
+    case QMessageBox::No :
+        setDocumentTitile("untitled -- MicrologicIDE");
+        ui->textEdit->document()->clear();
+        break;
+    case QMessageBox::Cancel :
+        break;
+    default:
+        break;
     }
 }
 
 void MicrologicIDE::openFile(void)
 {
-    if (ui->textEdit->document()->isModified()) //编辑区内容是否改变
-    {
-        saveDocumentText();
-    }
+    //saveDocumentText();
     getDocumentText();
     setDocumentTitile(currentfileName);
     try{
@@ -109,46 +101,35 @@ void MicrologicIDE::openFile(void)
 
 void MicrologicIDE::saveFile(void)
 {
-    if (ui->textEdit->document()->isModified() || !currentfileName.isEmpty())
-    {
-        QString tmpFileName = saveDocumentText();
-        setDocumentTitile(tmpFileName);
-        currentfileName = tmpFileName;
-    }
+    QString tmpFileName = saveDocumentText();
+    setDocumentTitile(tmpFileName);
+    currentfileName = tmpFileName;
 }
 
 void MicrologicIDE::saveAsFile()
 {
-    if (ui->textEdit->document()->isModified())
-    {
-        QString tmpFileName = currentfileName;
-        currentfileName.clear();
-        saveDocumentText();
-        currentfileName = tmpFileName;
-    }
+    QString tmpFileName = currentfileName;
+    currentfileName.clear();
+    saveDocumentText();
+    currentfileName = tmpFileName;
 }
 
-
-//退出
 void MicrologicIDE::exitNotepad()
 {
-    if (ui->textEdit->document()->isModified())
+    switch (requestIsSave())
     {
-        switch (requestIsSave())
-        {
-            case QMessageBox::Yes :
-                saveDocumentText();
-                this->close();
-                break;
-            case QMessageBox::No :
-                this->close();
-                break;
-            case QMessageBox::Cancel :
-                qDebug() << "取消";
-                break;
-            default:
-                break;
-        }
+    case QMessageBox::Yes :
+        saveDocumentText();
+        this->close();
+        break;
+    case QMessageBox::No :
+        this->close();
+        break;
+    case QMessageBox::Cancel :
+        qDebug() << "取消";
+        break;
+    default:
+        break;
     }
 }
 
@@ -176,7 +157,7 @@ QString MicrologicIDE::saveDocumentText(void)
     QFile file;
     QTextStream *out;
 
-    if (currentfileName.isEmpty())   //如果当前没有打开的文件，就将内容保存新建的文件中，否则保存到当前打开的文件中
+    if (currentfileName.isEmpty())
     {
         fileName = QFileDialog::getSaveFileName(this, tr("保存文件"), QDir::currentPath(), tr("Micrologic文件(*.mcl)"));
     }
@@ -187,9 +168,9 @@ QString MicrologicIDE::saveDocumentText(void)
 
     file.setFileName(fileName);
     out = new QTextStream(&file);
-    if (file.open(QIODevice::WriteOnly))   //只写模式打开
+    if (file.open(QIODevice::WriteOnly))
     {
-        *out << ui->textEdit->document()->toPlainText(); //将textEdit编辑区域内容写入文件中
+        *out << ui->textEdit->document()->toPlainText();
         file.close();
     }
 
@@ -206,7 +187,7 @@ void MicrologicIDE::getDocumentText()
     currentfileName = fileName;
     file.setFileName(fileName);
     in = new QTextStream(&file);
-    if (file.open(QIODevice::ReadOnly))   //只写模式打开
+    if (file.open(QIODevice::ReadOnly))
     {
         ui->textEdit->setText(in->readAll());
         file.close();
@@ -228,6 +209,7 @@ void MicrologicIDE::setDocumentTitile(QString title)
 
 void MicrologicIDE::runFile()
 {
+    qDebug()<<currentfileName;
     QByteArray b=(QString::fromStdString("start /d \""+exepath+"\" Micrologic.exe ")+currentfileName).toLatin1();
     system(b.data());
 }
@@ -624,3 +606,37 @@ void MicrologicIDE::on_textEdit_textChanged()
 
 }
 
+void MicrologicIDE::updateDebug()
+{
+    std::ifstream debug;
+    debug.open(exepath+"\\debug.log",std::ios::in);
+    if(!debug.good()){
+        qDebug()<<"Error opening debug.log";
+        return;
+    }
+    char text[256];
+    debug.getline(text,256);
+
+    std::stringstream ss(text);
+    std::string s{};
+    std::vector<std::string> nums{};
+    while (std::getline(ss, s, ' ')) {
+        nums.push_back(s);
+    }
+    std::string line1="",line2="";
+    for(int i=0;i<nums.size();i++){
+        if(nums[i].size()==1){
+            line1+=("[L"+std::to_string(i)+"] ");
+            if(std::to_string(i).length()==1) line2+=("  "+nums[i]+"  ");
+            else line2+=("  "+nums[i]+"   ");
+        }
+        else{
+            line1+=("[W"+std::to_string(i)+"] ");
+            if(std::to_string(i).length()==1) line2+=(nums[i]+" ");
+            else line2+=(" "+nums[i]+" ");
+        }
+    }
+    line1=line1.substr(0,line1.length()-1);
+    line2=line2.substr(0,line2.length()-1);
+    ui->debugText->setText((line1+"\n"+line2).c_str());
+}

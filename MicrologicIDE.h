@@ -2,6 +2,7 @@
 #define MicrologicIDE_H
 
 #include <QMainWindow>
+#include <QFileSystemWatcher>
 
 extern std::string exepath;
 
@@ -93,10 +94,13 @@ public:
 private slots:
 
     void on_textEdit_textChanged();
+    void updateDebug();
+
 
 private:
     Ui::MicrologicIDE *ui;
     QString currentfileName;
+    QFileSystemWatcher *debugger;
 };
 
 #endif // MicrologicIDE_H
