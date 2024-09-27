@@ -6,6 +6,11 @@ This is an IDE for Micrologic. (See https://github.com/HZZcode/Micrologic for it
 
 It includes Micrologic interpreter so there's no need to download Micrologic.exe.
 
-# TODO
+# Function
 
-* Add syntax highlighting function
+* Code editor
+* Syntax highlighter
+* Error marker
+* Debugger
+
+# TODO
