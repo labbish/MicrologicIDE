@@ -18,18 +18,18 @@ public:
     std::string currentContent;
     std::string path;
 
-    const std::string errorStart="<span style=\"text-decoration: underline; text-decoration-color: red; white-space: pre;\">",errorEnd="</span>";
-    const std::string keyStart="<span style=\"color: orange; white-space: pre;\">",keyEnd="</span>";
-    const std::string numStart="<span style=\"color: aqua; white-space: pre;\">",numEnd="</span>";
-    const std::string modStart="<span style=\"color: purple; white-space: pre;\">",modEnd="</span>";
+    std::string errorStart{},errorEnd{};
+    std::string keyStart{},keyEnd{};
+    std::string numStart{},numEnd{};
+    std::string modStart{},modEnd{};
 
-    const std::string debugStart="<span style=\"white-space: pre;\">",debugEnd="</span>";
-    const std::string IStart="<span style=\"color: red; white-space: pre;\">",IEnd="</span>";
-    const std::string OStart="<span style=\"color: blue; white-space: pre;\">",OEnd="</span>";
-    const std::string IOStart="<span style=\"color: purple; white-space: pre;\">",IOEnd="</span>";
-    const std::string debugInfo="====[DEBUG INFO] "+IStart+"input "+IEnd+OStart+"output "+OEnd+IOStart+"input&output "+IOEnd+"====";
+    std::string debugStart{},debugEnd{};
+    std::string IStart{},IEnd{};
+    std::string OStart{},OEnd{};
+    std::string IOStart{},IOEnd{};
+    std::string debugInfo{};
 
-    const std::vector<std::string> blankChars={" ","\n",errorStart,errorEnd,"<br>"};
+    std::vector<std::string> blankChars;
     const std::vector<std::string> keys={"end","line","wline","N","A","R","T","C","P","set","check","input:","input","output:","output","tick","tick!","speed","path","open","mod","block","inspect","echo","@echo","clear","help","clear"};
     const std::vector<std::string> nums={"0","1","2","3","4","5","6","7","8","9"};
 
@@ -63,6 +63,9 @@ public:
     std::map<std::string,std::pair<int,int>> findMods(std::vector<std::string>);
     std::vector<bool> grammarCheck(std::vector<std::string>);
     void makeMarks();
+
+    void lightMode();
+    void darkMode();
 
     int charCount(int,int);
 

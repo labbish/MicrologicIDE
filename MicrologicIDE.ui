@@ -36,7 +36,7 @@
       <property name="maximumSize">
        <size>
         <width>16777215</width>
-        <height>54</height>
+        <height>72</height>
        </size>
       </property>
       <property name="font">
@@ -89,7 +89,8 @@
     <property name="title">
      <string>查看(&amp;V)</string>
     </property>
-    <addaction name="statusBarAction"/>
+    <addaction name="lightModeAction"/>
+    <addaction name="darkModeAction"/>
    </widget>
    <widget class="QMenu" name="menu_H">
     <property name="title">
@@ -250,11 +251,6 @@
     <string>颜色</string>
    </property>
   </action>
-  <action name="statusBarAction">
-   <property name="text">
-    <string>状态栏(S)</string>
-   </property>
-  </action>
   <action name="getHelpAction">
    <property name="text">
     <string>查看帮助(H)</string>
@@ -281,6 +277,16 @@
   <action name="actiontest">
    <property name="text">
     <string>test</string>
+   </property>
+  </action>
+  <action name="darkModeAction">
+   <property name="text">
+    <string>深色模式</string>
+   </property>
+  </action>
+  <action name="lightModeAction">
+   <property name="text">
+    <string>浅色模式</string>
    </property>
   </action>
  </widget>

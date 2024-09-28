@@ -19,16 +19,15 @@
 
 std::string exepath="";
 
-MicrologicIDE::MicrologicIDE(QWidget *parent) :
-    QMainWindow(parent),
-    ui(new Ui::MicrologicIDE)
-{
+MicrologicIDE::MicrologicIDE(QWidget *parent) : QMainWindow(parent), ui(new Ui::MicrologicIDE){
     currentContent="";
     path="";
 
     ui->setupUi(this);
     ui->textEdit->setDocumentTitle("untitled -- MicrologicIDE");
     setWindowTitle(ui->textEdit->documentTitle());
+
+    lightMode();
 
     debugger = new QFileSystemWatcher();
     QByteArray b=(QString::fromStdString(exepath+"\\debug.log")+currentfileName).toLatin1();
@@ -50,6 +49,9 @@ MicrologicIDE::MicrologicIDE(QWidget *parent) :
     connect(ui->undoAction, &QAction::triggered, ui->textEdit, &QTextEdit::undo);
     connect(ui->selectAllAction, &QAction::triggered, ui->textEdit, &QTextEdit::selectAll);
 
+    connect(ui->darkModeAction, &QAction::triggered, this, &MicrologicIDE::darkMode);
+    connect(ui->lightModeAction, &QAction::triggered, this, &MicrologicIDE::lightMode);
+
     connect(ui->runAction, &QAction::triggered, this, &MicrologicIDE::runFile);
     connect(debugger, SIGNAL(fileChanged(QString)), this, SLOT(updateDebug()));
 
@@ -57,13 +59,11 @@ MicrologicIDE::MicrologicIDE(QWidget *parent) :
 
 }
 
-MicrologicIDE::~MicrologicIDE()
-{
+MicrologicIDE::~MicrologicIDE(){
     delete ui;
 }
 
-void MicrologicIDE::newFile(void)
-{
+void MicrologicIDE::newFile(void){
     switch (requestIsSave())
     {
     case QMessageBox::Yes :
@@ -88,8 +88,7 @@ void MicrologicIDE::newFile(void)
     }
 }
 
-void MicrologicIDE::openFile(void)
-{
+void MicrologicIDE::openFile(void){
     //saveDocumentText();
     getDocumentText();
     setDocumentTitile(currentfileName);
@@ -99,23 +98,20 @@ void MicrologicIDE::openFile(void)
     }catch(...){}
 }
 
-void MicrologicIDE::saveFile(void)
-{
+void MicrologicIDE::saveFile(void){
     QString tmpFileName = saveDocumentText();
     setDocumentTitile(tmpFileName);
     currentfileName = tmpFileName;
 }
 
-void MicrologicIDE::saveAsFile()
-{
+void MicrologicIDE::saveAsFile(){
     QString tmpFileName = currentfileName;
     currentfileName.clear();
     saveDocumentText();
     currentfileName = tmpFileName;
 }
 
-void MicrologicIDE::exitNotepad()
-{
+void MicrologicIDE::exitNotepad(){
     switch (requestIsSave())
     {
     case QMessageBox::Yes :
@@ -133,8 +129,7 @@ void MicrologicIDE::exitNotepad()
     }
 }
 
-void MicrologicIDE::doForAboutAction()
-{
+void MicrologicIDE::doForAboutAction(){
     AboutDialog about;
     about.exec();
 }
@@ -144,15 +139,13 @@ void MicrologicIDE::setDateTime()
     ui->textEdit->append(QDateTime::currentDateTime().toString());
 }
 
-void MicrologicIDE::seeHelp(void)
-{
+void MicrologicIDE::seeHelp(void){
     QUrl url("https://github.com/HZZcode/MicrologicIDE");
     QDesktopServices::openUrl(url);
 }
 
 
-QString MicrologicIDE::saveDocumentText(void)
-{
+QString MicrologicIDE::saveDocumentText(void){
     QString fileName;
     QFile file;
     QTextStream *out;
@@ -177,8 +170,7 @@ QString MicrologicIDE::saveDocumentText(void)
     return fileName;
 }
 
-void MicrologicIDE::getDocumentText()
-{
+void MicrologicIDE::getDocumentText(){
     QString fileName;
     QFile file;
     QTextStream *in;
@@ -194,21 +186,18 @@ void MicrologicIDE::getDocumentText()
     }
 }
 
-int MicrologicIDE::requestIsSave()
-{
+int MicrologicIDE::requestIsSave(){
     int answer = QMessageBox::question(this, tr("MicrologicIDE"), tr("是否将更改保存？"), QMessageBox::Yes | QMessageBox::No | QMessageBox::Cancel);
     return answer;
 }
 
 
-void MicrologicIDE::setDocumentTitile(QString title)
-{
+void MicrologicIDE::setDocumentTitile(QString title){
     ui->textEdit->setDocumentTitle(title);
     setWindowTitle(ui->textEdit->documentTitle());
 }
 
-void MicrologicIDE::runFile()
-{
+void MicrologicIDE::runFile(){
     qDebug()<<currentfileName;
     QByteArray b=(QString::fromStdString("start /d \""+exepath+"\" Micrologic.exe ")+currentfileName).toLatin1();
     system(b.data());
@@ -231,8 +220,7 @@ std::vector<std::string> MicrologicIDE::content(){
     return lines;
 }
 
-void MicrologicIDE::mark(std::vector<int> errorList={})
-{
+void MicrologicIDE::mark(std::vector<int> errorList={}){
     std::string text{};
     std::vector<std::string> lines=content();
 
@@ -312,8 +300,7 @@ void MicrologicIDE::mark(std::vector<int> errorList={})
     ui->textEdit->setText(text.c_str());
 }
 
-void MicrologicIDE::unmark()
-{
+void MicrologicIDE::unmark(){
     std::string text=ui->textEdit->document()->toPlainText().toStdString();
     ui->textEdit->setText(text.c_str());
 }
@@ -332,6 +319,44 @@ void MicrologicIDE::makeMarks(){
         cursor.setPosition(pos);
         ui->textEdit->setTextCursor(cursor);
     }
+}
+
+void MicrologicIDE::lightMode(){
+    this->setStyleSheet("background-color: white; color: black;");
+    ui->textEdit->setStyleSheet("border-top-style: solid; border-bottom-style: solid; border-width: 1px; border-color: black;");
+    ui->debugText->setStyleSheet("border-bottom-style: solid; border-width: 1px; border-color: black;");
+
+    errorStart="<span style=\"text-decoration: underline; text-decoration-color: red; white-space: pre;\">";errorEnd="</span>";
+    keyStart="<span style=\"color: orange; white-space: pre;\">";keyEnd="</span>";
+    numStart="<span style=\"color: aqua; white-space: pre;\">";numEnd="</span>";
+    modStart="<span style=\"color: purple; white-space: pre;\">";modEnd="</span>";
+
+    debugStart="<span style=\"white-space: pre;\">";debugEnd="</span>";
+    IStart="<span style=\"color: red; white-space: pre;\">";IEnd="</span>";
+    OStart="<span style=\"color: blue; white-space: pre;\">";OEnd="</span>";
+    IOStart="<span style=\"color: purple; white-space: pre;\">";IOEnd="</span>";
+    debugInfo="====[DEBUG INFO] "+IStart+"input "+IEnd+OStart+"output "+OEnd+IOStart+"input&output "+IOEnd+"====";
+
+    blankChars={" ","\n",errorStart,errorEnd,"<br>"};
+}
+
+void MicrologicIDE::darkMode(){
+    this->setStyleSheet("background-color: black; color: white;");
+    ui->textEdit->setStyleSheet("border-top-style: solid; border-bottom-style: solid; border-width: 1px; border-color: white;");
+    ui->debugText->setStyleSheet("border-bottom-style: solid; border-width: 1px; border-color: white;");
+
+    errorStart="<span style=\"text-decoration: underline; text-decoration-color: red; white-space: pre;\">";errorEnd="</span>";
+    keyStart="<span style=\"color: orange; white-space: pre;\">";keyEnd="</span>";
+    numStart="<span style=\"color: aqua; white-space: pre;\">";numEnd="</span>";
+    modStart="<span style=\"color: purple; white-space: pre;\">";modEnd="</span>";
+
+    debugStart="<span style=\"white-space: pre;\">";debugEnd="</span>";
+    IStart="<span style=\"color: red; white-space: pre;\">";IEnd="</span>";
+    OStart="<span style=\"color: blue; white-space: pre;\">";OEnd="</span>";
+    IOStart="<span style=\"color: purple; white-space: pre;\">";IOEnd="</span>";
+    debugInfo="====[DEBUG INFO] "+IStart+"input "+IEnd+OStart+"output "+OEnd+IOStart+"input&output "+IOEnd+"====";
+
+    blankChars={" ","\n",errorStart,errorEnd,"<br>"};
 }
 
 int countInput(std::vector<std::string> lines){
@@ -415,8 +440,7 @@ std::map<std::string,std::pair<int,int>> MicrologicIDE::findMods(std::vector<std
     return mods;
 }
 
-std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines)
-{
+std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines){
     std::vector<bool> ans(lines.size());
     std::vector<bool> Ls{}; //line order->is wide
     std::vector<bool> ins{}; //input line order->is wide
@@ -573,6 +597,23 @@ std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines)
             }
             else ans[i]=false;
         }
+        else if((args[0]=="type"||args[0]=="tag")&&args.size()==2){
+            if(isNumber(args[1])){
+                if(atoi(args[1].c_str())<Ls.size()) ans[i]=true;
+                else ans[i]=false;
+            }
+            else ans[i]=false;
+        }
+        else if((args[0]=="check-input"||args[0]=="check-output")&&args.size()==1){
+            ans[i]=true;
+        }
+        else if((args[0]=="check-input"||args[0]=="check-output")&&args.size()==2){
+            if(isNumber(args[1])){
+                if(args[0]=="check-input"&&atoi(args[1].c_str())<ins.size()) ans[i]=true;
+                else if(args[0]=="check-output"&&atoi(args[1].c_str())<outs.size()) ans[i]=true;
+                else ans[i]=false;
+            }
+        }
         else if(args[0]=="inspect"&&args.size()==3){
             if(mods.count(args[1])!=0||args[1]=="N"||args[1]=="A"||args[1]=="R"||args[1]=="T"||args[1]=="C"||args[1]=="P"){
                 if(isNumber(args[2])&&atoi(args[2].c_str())<modBlock[args[1]]) ans[i]=true;
@@ -601,13 +642,11 @@ std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines)
     return ans;
 }
 
-void MicrologicIDE::on_textEdit_textChanged()
-{
+void MicrologicIDE::on_textEdit_textChanged(){
 
 }
 
-void MicrologicIDE::updateDebug()
-{
+void MicrologicIDE::updateDebug(){
     std::ifstream debug;
     debug.open(exepath+"\\debug.log",std::ios::in);
     if(!debug.good()){
