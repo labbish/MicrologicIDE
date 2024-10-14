@@ -533,6 +533,7 @@ std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines){
                 if(atoi(args[1].c_str())<Ls.size()) ans[i]=true;
                 else ans[i]=false;
             }
+            else ans[i]=false;
         }
         else if((args[0]=="input:"||args[0]=="output:")&&args.size()==2){
             if(isNumber(args[1])){
@@ -543,6 +544,7 @@ std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines){
                 }
                 else ans[i]=false;
             }
+            else ans[i]=false;
         }
         else if(args[0]=="input"&&args.size()==3){
             if(isNumber(args[1])&&isNumber(args[2])){
@@ -566,6 +568,7 @@ std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines){
                 if(atoi(args[1].c_str())<outs.size()) ans[i]=true;
                 else ans[i]=false;
             }
+            else ans[i]=false;
         }
         else if((args[0]=="tick"||args[0]=="tick!")&&args.size()==1){
             ans[i]=true;
@@ -579,14 +582,17 @@ std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines){
         else if(args[0]=="path"&&args.size()==2){
             ans[i]=true;
         }
-        else if(args[0]=="open"&&args.size()==2){
+        else if((args[0]=="open"||args[0]=="safe-open")&&args.size()==2){
             ans[i]=true;
         }
-        else if(args[0]=="open"&&count(line.begin(),line.end(),'\"')>=2){
+        else if((args[0]=="open"||args[0]=="safe-open")&&count(line.begin(),line.end(),'\"')>=2){
             ans[i]=true;
         }
         else if(args[0]=="mod"&&args.size()==3){
             modBlock.insert({args[1],0});
+            ans[i]=true;
+        }
+        else if(args[0]=="check-mod"&&args.size()==1){
             ans[i]=true;
         }
         else if(args[0]=="block"&&args.size()>=3){
@@ -594,6 +600,17 @@ std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines){
                 if(args.size()==2+mods[args[1]].first+mods[args[1]].second) ans[i]=true;
                 else ans[i]=false;
                 modBlock[args[1]]++;
+            }
+            else ans[i]=false;
+        }
+        else if(args[0]=="block-type"&&args.size()==2){
+            if(isNumber(args[1])){
+                int blockCount=0;
+                for(const std::pair<std::string,int>& p:modBlock){
+                    if(p.first!="N"&&p.first!="A"&&p.first!="R"&&p.first!="T"&&p.first!="C"&&p.first!="P") blockCount+=p.second;
+                }
+                if(atoi(args[1].c_str())<blockCount) ans[i]=true;
+                else ans[i]=false;
             }
             else ans[i]=false;
         }
@@ -613,9 +630,21 @@ std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines){
                 else if(args[0]=="check-output"&&atoi(args[1].c_str())<outs.size()) ans[i]=true;
                 else ans[i]=false;
             }
+            else ans[i]=false;
         }
         else if(args[0]=="inspect"&&args.size()==3){
             if(mods.count(args[1])!=0||args[1]=="N"||args[1]=="A"||args[1]=="R"||args[1]=="T"||args[1]=="C"||args[1]=="P"){
+                if(isNumber(args[2])&&atoi(args[2].c_str())<modBlock[args[1]]) ans[i]=true;
+                else ans[i]=false;
+            }
+            else ans[i]=false;
+        }
+        else if(args[0]=="del"&&args.size()==3){
+            if(args[1]=="line"){
+                if(isNumber(args[2])&&atoi(args[2].c_str())<Ls.size()) ans[i]=true;
+                else ans[i]=false;
+            }
+            else if(mods.count(args[1])!=0||args[1]=="N"||args[1]=="A"||args[1]=="R"||args[1]=="T"||args[1]=="C"||args[1]=="P"){
                 if(isNumber(args[2])&&atoi(args[2].c_str())<modBlock[args[1]]) ans[i]=true;
                 else ans[i]=false;
             }
@@ -632,7 +661,7 @@ std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines){
             else ans[i]=false;
         }
         else if(args[0]=="lang"&&args.size()==2){
-            ans[i]=std::count(langs.begin(),langs.end(),args[1])==1;
+            ans[i]=std::count(langs.begin(),langs.end(),args[1])>0;
         }
         else if(args[0]=="neko"&&args.size()==1){
             ans[i]=true;

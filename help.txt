@@ -41,10 +41,14 @@ tick [TIMES]                                              Tick mutiple times.
 tick!                                                     Tick once, and output values of all lines after it.
 tick! [TIMES]                                             Tick mutiple times, and output values of all lines after every tick.
 speed [SPEED]                                             Set speed. The default speed is 1.
+path                                                      Check current path.
 path [PATH]                                               Set path of scripts. Use double quotation marks when the path name include spaces.
 open [FILE]                                               Open an Micrologic script file. Use double quotation marks when the file name include spaces.
+safe-open [FILE]                                          Similar to open, but disable some commands.
 mod [MOD] [FILE]                                          Give an file a mod name, in order to use it as a block afterwards.
+check-mods                                                Check all current mods.
 block [MOD] [INPUT [INPUT ...]] [OUTPUT [OUTPUT ...]]     Creates a user-defined block.
+block-type [BLOCK]                                        Check the type of a designated block.
 tag [ALINE]                                               Check whether a line is set as input or output.
 type [ALINE]                                              Check whether a line is wide.
 check-input                                               Lists the line order numbers of input lines.
@@ -52,6 +56,9 @@ check-input [INPUT]                                       Lists the line order n
 check-output                                              Lists the line order numbers of output lines.
 check-output [OUTPUT]                                     Lists the line order number of a designated output line.
 inspect [BLOCKTYPE] [BLOCK]                               Checks whether a block connects correct line type.
+del [BLOCKTYPE] [BLOCK]                                   Delete a designated block.
+del line [ALINE]                                          Delete a designated line. No bugs were found in tn test but you'd betterbe careful of those blocks without line connection.
+export                                                    Export current blocks.
 echo [MESSAGE]                                            Outputs a message.
 @echo [ECHO]                                              Set whether to echo messages. Requires 0 or 1.
 clear                                                     Clear the interpreter' data and restart.

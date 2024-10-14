@@ -30,7 +30,7 @@ public:
     std::string debugInfo{};
 
     std::vector<std::string> blankChars;
-    const std::vector<std::string> keys={"end","line","wline","N","A","R","T","C","P","set","check","input:","input","output:","output","tick","tick!","speed","path","open","mod","block","inspect","echo","@echo","clear","help","clear"};
+    const std::vector<std::string> keys={"end","line","wline","N","A","R","T","C","P","set","check","input:","input","output:","output","tick","tick!","speed","path","open","safe-open","mod","check-mods","block","block-type","tag","type","check-input","check-output","inspect","del","export","echo","@echo","clear","help","lang"};
     const std::vector<std::string> nums={"0","1","2","3","4","5","6","7","8","9"};
 
     explicit MicrologicIDE(QWidget *parent = 0);
@@ -98,7 +98,7 @@ public:
         return l;
     }
 
-    std::vector<std::string> langs={"list","zh_cn","en_us"};
+    std::vector<std::string> langs={"list"};
 
 private slots:
 
