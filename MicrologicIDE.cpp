@@ -51,6 +51,7 @@ MicrologicIDE::MicrologicIDE(QWidget *parent) : QMainWindow(parent), ui(new Ui::
 
     connect(ui->darkModeAction, &QAction::triggered, this, &MicrologicIDE::darkMode);
     connect(ui->lightModeAction, &QAction::triggered, this, &MicrologicIDE::lightMode);
+    connect(ui->safeModeAction, &QAction::triggered, this, &MicrologicIDE::safeMode);
 
     connect(ui->runAction, &QAction::triggered, this, &MicrologicIDE::runFile);
     connect(debugger, SIGNAL(fileChanged(QString)), this, SLOT(updateDebug()));
@@ -359,6 +360,14 @@ void MicrologicIDE::darkMode(){
     blankChars={" ","\n",errorStart,errorEnd,"<br>"};
 }
 
+void MicrologicIDE::safeMode(){
+    safe=!safe;
+    makeMarks();
+    QAction *action = findChild<QAction*>("safeModeAction");
+    if(!action) return;
+    action->setText(safe?"关闭安全模式":"打开安全模式");
+}
+
 int countInput(std::vector<std::string> lines){
     int ans=0;
     for(int i=0;i<lines.size();i++){
@@ -456,7 +465,10 @@ std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines){
         while (std::getline(ss, s, ' ')) {
             args.push_back(s);
         }
-        if(args.size()==0) ans[i]=true;
+        if(safe&&count(unsafeKeys.begin(),unsafeKeys.end(),args[0])){
+            ans[i]=false;
+        }
+        else if(args.size()==0) ans[i]=true;
         else if(args[0]=="end"||args[0]=="clear"){
             ans[i]=args.size()==1;
         }

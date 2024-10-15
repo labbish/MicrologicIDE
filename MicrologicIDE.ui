@@ -91,6 +91,7 @@
     </property>
     <addaction name="lightModeAction"/>
     <addaction name="darkModeAction"/>
+    <addaction name="safeModeAction"/>
    </widget>
    <widget class="QMenu" name="menu_H">
     <property name="title">
@@ -287,6 +288,14 @@
   <action name="lightModeAction">
    <property name="text">
     <string>浅色模式</string>
+   </property>
+  </action>
+  <action name="safeModeAction">
+   <property name="text">
+    <string>打开安全模式</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+S</string>
    </property>
   </action>
  </widget>

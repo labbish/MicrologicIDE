@@ -17,6 +17,7 @@ class MicrologicIDE : public QMainWindow
 public:
     std::string currentContent;
     std::string path;
+    bool safe=false;
 
     std::string errorStart{},errorEnd{};
     std::string keyStart{},keyEnd{};
@@ -31,6 +32,8 @@ public:
 
     std::vector<std::string> blankChars;
     const std::vector<std::string> keys={"end","line","wline","N","A","R","T","C","P","set","check","input:","input","output:","output","tick","tick!","speed","path","open","safe-open","mod","check-mods","block","block-type","tag","type","check-input","check-output","inspect","del","export","echo","@echo","clear","help","lang"};
+    const std::vector<std::string> unsafeKeys={"end","check","output","tick","tick!","path","check-mods","block-type","tag","type","check-input","check-output","inspect","del","export","clear","help","lang"};
+
     const std::vector<std::string> nums={"0","1","2","3","4","5","6","7","8","9"};
 
     explicit MicrologicIDE(QWidget *parent = 0);
@@ -66,6 +69,7 @@ public:
 
     void lightMode();
     void darkMode();
+    void safeMode();
 
     int charCount(int,int);
 
