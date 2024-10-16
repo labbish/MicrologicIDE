@@ -66,6 +66,7 @@ public:
     void unmark();
     std::map<std::string,std::pair<int,int>> findMods(std::vector<std::string>);
     std::vector<bool> grammarCheck(std::vector<std::string>);
+    void makeNewMarks();
     void makeMarks();
 
     void lightMode();

@@ -42,6 +42,7 @@ MicrologicIDE::MicrologicIDE(QWidget *parent) : QMainWindow(parent), ui(new Ui::
 
     connect(ui->getHelpAction, &QAction::triggered, this, &MicrologicIDE::seeHelp);
     connect(ui->dateAction, &QAction::triggered, this, &MicrologicIDE::setDateTime);
+    connect(ui->refreshAction, &QAction::triggered, this, &MicrologicIDE::makeMarks);
 
     connect(ui->copyAction, &QAction::triggered, ui->textEdit, &QTextEdit::copy);
     connect(ui->cutAction, &QAction::triggered, ui->textEdit, &QTextEdit::cut);
@@ -56,7 +57,7 @@ MicrologicIDE::MicrologicIDE(QWidget *parent) : QMainWindow(parent), ui(new Ui::
     connect(ui->runAction, &QAction::triggered, this, &MicrologicIDE::runFile);
     connect(debugger, SIGNAL(fileChanged(QString)), this, SLOT(updateDebug()));
 
-    connect(ui->textEdit, &QTextEdit::textChanged, this, &MicrologicIDE::makeMarks);
+    connect(ui->textEdit, &QTextEdit::textChanged, this, &MicrologicIDE::makeNewMarks);
 
 }
 
@@ -97,6 +98,7 @@ void MicrologicIDE::openFile(void){
         path=currentfileName.toStdString().substr(0,currentfileName.toStdString().rfind("/")+1);
         path.replace(path.size()-1,1,"\\");
     }catch(...){}
+    makeMarks();
 }
 
 void MicrologicIDE::saveFile(void){
@@ -325,20 +327,24 @@ void MicrologicIDE::unmark(){
     ui->textEdit->setText(text.c_str());
 }
 
-void MicrologicIDE::makeMarks(){
+void MicrologicIDE::makeNewMarks(){
     if(currentContent!=ui->textEdit->document()->toPlainText().toStdString()){
-        currentContent=ui->textEdit->document()->toPlainText().toStdString();
-        QTextCursor cursor=ui->textEdit->textCursor();
-        int pos=cursor.position();
-        unmark();
-        std::vector<int> errorList;
-        auto grammar=grammarCheck(content());
-        for(int i=0;i<content().size();i++) if(!grammar[i]) errorList.push_back(i);
-        mark(errorList);
-        cursor=ui->textEdit->textCursor();
-        cursor.setPosition(pos);
-        ui->textEdit->setTextCursor(cursor);
+        makeMarks();
     }
+}
+
+void MicrologicIDE::makeMarks(){
+    currentContent=ui->textEdit->document()->toPlainText().toStdString();
+    QTextCursor cursor=ui->textEdit->textCursor();
+    int pos=cursor.position();
+    unmark();
+    std::vector<int> errorList;
+    auto grammar=grammarCheck(content());
+    for(int i=0;i<content().size();i++) if(!grammar[i]) errorList.push_back(i);
+    mark(errorList);
+    cursor=ui->textEdit->textCursor();
+    cursor.setPosition(pos);
+    ui->textEdit->setTextCursor(cursor);
 }
 
 void MicrologicIDE::lightMode(){
@@ -430,13 +436,13 @@ std::map<std::string,std::pair<int,int>> MicrologicIDE::findMods(std::vector<std
             args.push_back(s);
         }
         if(args.size()>0){
-            if (args[0] == "path" && count(line.begin(), line.end(), '\"') >= 2) {
-                int x = line.find("\""), y = line.rfind("\"");
-                std::string f = line.substr(x + 1, y - x - 1);
-                path = f;
+            if (args[0]=="path"&&count(line.begin(),line.end(),'\"')>=2) {
+                int x=line.find("\""),y=line.rfind("\"");
+                std::string f = line.substr(x+1,y-x-1);
+                path=f;
             }
-            else if (args[0] == "path" && args.size() == 2) {
-                path = args[1];
+            else if (args[0]=="path"&&args.size()==2) {
+                path=args[1];
             }
             else if(args[0]=="mod"&&args.size()==3){
                 try{
@@ -632,6 +638,10 @@ std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines){
             if(mods.count(args[1])!=0){
                 if(args.size()==2+mods[args[1]].first+mods[args[1]].second) ans[i]=true;
                 else ans[i]=false;
+                for(int j=2;j<args.size();j++){
+                    if(!isNumber(args[j])) ans[i]=false;
+                    if(atoi(args[j].c_str())>=Ls.size()) ans[i]=false;
+                }
                 modBlock[args[1]]++;
             }
             else ans[i]=false;

@@ -73,7 +73,7 @@
    </widget>
    <widget class="QMenu" name="menu_E">
     <property name="title">
-     <string>编辑(E)</string>
+     <string>编辑(&amp;E)</string>
     </property>
     <addaction name="undoAction"/>
     <addaction name="separator"/>
@@ -84,6 +84,7 @@
     <addaction name="separator"/>
     <addaction name="selectAllAction"/>
     <addaction name="dateAction"/>
+    <addaction name="refreshAction"/>
    </widget>
    <widget class="QMenu" name="menu_V">
     <property name="title">
@@ -102,7 +103,7 @@
    </widget>
    <widget class="QMenu" name="menu_F5">
     <property name="title">
-     <string>运行(R)</string>
+     <string>运行(&amp;R)</string>
     </property>
     <addaction name="runAction"/>
    </widget>
@@ -119,7 +120,7 @@
      <normaloff>:/images/new.png</normaloff>:/images/new.png</iconset>
    </property>
    <property name="text">
-    <string>新建(N)</string>
+    <string>新建(&amp;N)</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+N</string>
@@ -131,7 +132,7 @@
      <normaloff>:/images/open.png</normaloff>:/images/open.png</iconset>
    </property>
    <property name="text">
-    <string>打开(O)</string>
+    <string>打开(&amp;O)</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+O</string>
@@ -143,7 +144,7 @@
      <normaloff>:/images/save.png</normaloff>:/images/save.png</iconset>
    </property>
    <property name="text">
-    <string>保存(S)</string>
+    <string>保存(&amp;S)</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+S</string>
@@ -155,7 +156,7 @@
      <normaloff>:/images/saveAs.png</normaloff>:/images/saveAs.png</iconset>
    </property>
    <property name="text">
-    <string>另存为(A)</string>
+    <string>另存为(&amp;A)</string>
    </property>
   </action>
   <action name="exitNotepadAction">
@@ -164,7 +165,7 @@
      <normaloff>:/images/exit.png</normaloff>:/images/exit.png</iconset>
    </property>
    <property name="text">
-    <string>退出(X)</string>
+    <string>退出(&amp;X)</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+X</string>
@@ -176,7 +177,7 @@
      <normaloff>:/images/undo.png</normaloff>:/images/undo.png</iconset>
    </property>
    <property name="text">
-    <string>撤销(U)</string>
+    <string>撤销(&amp;U)</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+U</string>
@@ -188,7 +189,7 @@
      <normaloff>:/images/cut.png</normaloff>:/images/cut.png</iconset>
    </property>
    <property name="text">
-    <string>剪切(T)</string>
+    <string>剪切(&amp;T)</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+T</string>
@@ -200,7 +201,7 @@
      <normaloff>:/images/copy.png</normaloff>:/images/copy.png</iconset>
    </property>
    <property name="text">
-    <string>复制(C)</string>
+    <string>复制(&amp;C)</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+C</string>
@@ -212,7 +213,7 @@
      <normaloff>:/images/paste.png</normaloff>:/images/paste.png</iconset>
    </property>
    <property name="text">
-    <string>粘贴(P)</string>
+    <string>粘贴(&amp;P)</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+P</string>
@@ -220,7 +221,7 @@
   </action>
   <action name="deleteAction">
    <property name="text">
-    <string>删除(L)</string>
+    <string>删除(&amp;L)</string>
    </property>
    <property name="shortcut">
     <string>Del</string>
@@ -228,7 +229,7 @@
   </action>
   <action name="selectAllAction">
    <property name="text">
-    <string>全选(A)</string>
+    <string>全选(&amp;A)</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+A</string>
@@ -236,7 +237,7 @@
   </action>
   <action name="dateAction">
    <property name="text">
-    <string>时间/日期(D)</string>
+    <string>时间/日期(&amp;D)</string>
    </property>
    <property name="shortcut">
     <string>Ctrl+D</string>
@@ -296,6 +297,14 @@
    </property>
    <property name="shortcut">
     <string>Alt+S</string>
+   </property>
+  </action>
+  <action name="refreshAction">
+   <property name="text">
+    <string>刷新(&amp;R)</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+R</string>
    </property>
   </action>
  </widget>
