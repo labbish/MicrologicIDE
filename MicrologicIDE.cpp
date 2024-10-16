@@ -232,6 +232,7 @@ void MicrologicIDE::mark(std::vector<int> errorList={}){
 
     //keyword
     for(const std::string& key:keys){
+        if(safe&&std::count(unsafeKeys.begin(),unsafeKeys.end(),key)) continue;
         int t{};
         for(const std::string& x:blankChars)
             for(const std::string& y:blankChars)
@@ -243,6 +244,24 @@ void MicrologicIDE::mark(std::vector<int> errorList={}){
                 text.replace(0,key.size(),keyStart+key+keyEnd);
             if(text.substr(text.size()-key.size(),text.size())==key)
                 text.replace(text.size()-key.size(),key.size(),keyStart+key+keyEnd);
+        }
+    }
+
+    //unsafe keyword
+    if(safe){
+        for(const std::string& unsafeKey:unsafeKeys){
+            int t{};
+            for(const std::string& x:blankChars)
+                for(const std::string& y:blankChars)
+                    while((t=text.find(x+unsafeKey+y))!=std::string::npos){
+                        text.replace(t,x.size()+unsafeKey.size()+y.size(),x+unsafeKeyStart+unsafeKey+unsafeKeyEnd+y);
+                    }
+            if(text.length()>=unsafeKey.length()){
+                if(text.substr(0,unsafeKey.size())==unsafeKey)
+                    text.replace(0,unsafeKey.size(),unsafeKeyStart+unsafeKey+unsafeKeyEnd);
+                if(text.substr(text.size()-unsafeKey.size(),text.size())==unsafeKey)
+                    text.replace(text.size()-unsafeKey.size(),unsafeKey.size(),unsafeKeyStart+unsafeKey+unsafeKeyEnd);
+            }
         }
     }
 
@@ -329,6 +348,7 @@ void MicrologicIDE::lightMode(){
 
     errorStart="<span style=\"text-decoration: underline; text-decoration-color: red; white-space: pre;\">";errorEnd="</span>";
     keyStart="<span style=\"color: orange; white-space: pre;\">";keyEnd="</span>";
+    unsafeKeyStart="<span style=\"color: red; white-space: pre;\">";unsafeKeyEnd="</span>";
     numStart="<span style=\"color: aqua; white-space: pre;\">";numEnd="</span>";
     modStart="<span style=\"color: purple; white-space: pre;\">";modEnd="</span>";
 
@@ -348,6 +368,7 @@ void MicrologicIDE::darkMode(){
 
     errorStart="<span style=\"text-decoration: underline; text-decoration-color: red; white-space: pre;\">";errorEnd="</span>";
     keyStart="<span style=\"color: orange; white-space: pre;\">";keyEnd="</span>";
+    unsafeKeyStart="<span style=\"color: red; white-space: pre;\">";unsafeKeyEnd="</span>";
     numStart="<span style=\"color: aqua; white-space: pre;\">";numEnd="</span>";
     modStart="<span style=\"color: purple; white-space: pre;\">";modEnd="</span>";
 
@@ -365,7 +386,7 @@ void MicrologicIDE::safeMode(){
     makeMarks();
     QAction *action = findChild<QAction*>("safeModeAction");
     if(!action) return;
-    action->setText(safe?"关闭安全模式":"打开安全模式");
+    action->setText(safe?"安全模式-已开启":"安全模式-未开启");
 }
 
 int countInput(std::vector<std::string> lines){

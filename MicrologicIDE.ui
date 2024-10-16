@@ -292,7 +292,7 @@
   </action>
   <action name="safeModeAction">
    <property name="text">
-    <string>打开安全模式</string>
+    <string>安全模式-未开启</string>
    </property>
    <property name="shortcut">
     <string>Alt+S</string>

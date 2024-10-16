@@ -21,6 +21,7 @@ public:
 
     std::string errorStart{},errorEnd{};
     std::string keyStart{},keyEnd{};
+    std::string unsafeKeyStart{},unsafeKeyEnd{};
     std::string numStart{},numEnd{};
     std::string modStart{},modEnd{};
 
