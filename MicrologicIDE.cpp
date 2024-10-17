@@ -19,7 +19,7 @@
 
 std::string exepath="";
 
-MicrologicIDE::MicrologicIDE(QWidget *parent) : QMainWindow(parent), ui(new Ui::MicrologicIDE){
+MicrologicIDE::MicrologicIDE(QWidget *parent,QString f) : QMainWindow(parent), ui(new Ui::MicrologicIDE){
     currentContent="";
     path="";
 
@@ -59,6 +59,7 @@ MicrologicIDE::MicrologicIDE(QWidget *parent) : QMainWindow(parent), ui(new Ui::
 
     connect(ui->textEdit, &QTextEdit::textChanged, this, &MicrologicIDE::makeNewMarks);
 
+    if(f!="") getDocumentText(f);
 }
 
 MicrologicIDE::~MicrologicIDE(){
@@ -94,10 +95,6 @@ void MicrologicIDE::openFile(void){
     //saveDocumentText();
     getDocumentText();
     setDocumentTitile(currentfileName);
-    try{
-        path=currentfileName.toStdString().substr(0,currentfileName.toStdString().rfind("/")+1);
-        path.replace(path.size()-1,1,"\\");
-    }catch(...){}
     makeMarks();
 }
 
@@ -173,12 +170,13 @@ QString MicrologicIDE::saveDocumentText(void){
     return fileName;
 }
 
-void MicrologicIDE::getDocumentText(){
+void MicrologicIDE::getDocumentText(QString f){
     QString fileName;
     QFile file;
     QTextStream *in;
 
-    fileName = QFileDialog::getOpenFileName(this, tr("打开文件"), QDir::currentPath(), tr("Micrologic文件(*.mcl)"));
+    if(f!="") fileName=f;
+    else fileName = QFileDialog::getOpenFileName(this, tr("打开文件"), QDir::currentPath(), tr("Micrologic文件(*.mcl)"));
     currentfileName = fileName;
     file.setFileName(fileName);
     in = new QTextStream(&file);
@@ -187,6 +185,14 @@ void MicrologicIDE::getDocumentText(){
         ui->textEdit->setText(in->readAll());
         file.close();
     }
+    try{
+        int p1=currentfileName.toStdString().rfind("/"),p2=currentfileName.toStdString().rfind("\\");
+        if(p1!=std::string::npos&&p1>p2) path=currentfileName.toStdString().substr(0,p1+1);
+        else path=currentfileName.toStdString().substr(0,p2+1);
+        path.replace(path.size()-1,1,"\\");
+    }catch(...){}
+    qDebug()<<fileName<<path;
+    makeMarks();
 }
 
 int MicrologicIDE::requestIsSave(){

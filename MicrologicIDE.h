@@ -37,7 +37,7 @@ public:
 
     const std::vector<std::string> nums={"0","1","2","3","4","5","6","7","8","9"};
 
-    explicit MicrologicIDE(QWidget *parent = 0);
+    explicit MicrologicIDE(QWidget *parent = 0,QString="");
     ~MicrologicIDE();
 
     void newFile(void);
@@ -52,7 +52,7 @@ public:
     void setDateTime();
 
     QString saveDocumentText(void);
-    void getDocumentText(void);
+    void getDocumentText(QString="");
     int requestIsSave(void);
 
     void setDocumentTitile(QString title);
