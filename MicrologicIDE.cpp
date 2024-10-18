@@ -702,7 +702,7 @@ std::vector<bool> MicrologicIDE::grammarCheck(std::vector<std::string> lines){
         else if(args[0]=="echo"){
             ans[i]=true;
         }
-        else if(args[0]=="@echo"&&args.size()==2){
+        else if((args[0]=="@echo"||args[0]=="@clock"||args[0]=="@per-step")&&args.size()==2){
             if(isNumber(args[1])){
                 if(args[1]=="0"||args[1]=="1") ans[i]=true;
                 else ans[i]=false;
