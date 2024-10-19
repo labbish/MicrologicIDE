@@ -14,3 +14,5 @@ It includes Micrologic interpreter so there's no need to download Micrologic.exe
 * Debugger
 
 # TODO
+
+* A lot of rewriting: see [Rewriting TODO.md](Rewriting%20TODO.md)
